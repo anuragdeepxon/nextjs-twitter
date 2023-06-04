@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { TwitterClient } from 'twitter-api-client'
 import dotenv from 'dotenv'
 import { stringify } from 'postcss'
+import { TwitterApi } from 'twitter-api-v2'
 
 dotenv.config()
 
@@ -20,6 +21,16 @@ export async function POST(request) {
     accessToken: process.env.TWITTER_ACCESS_TOKEN,
     accessTokenSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
   })
+
+  // Instantiate with desired auth type (here's Bearer v2 auth)
+  // const twitterClient = new TwitterApi(process.env.TWITTER_BEARER_TOEKN)
+
+  // Tell typescript it's a readonly app
+  // const readOnlyClient = twitterClient.readOnly
+
+  // Play with the built in methods
+  // const user = await readOnlyClient.v2.userByUsername('AnuragD54270021')
+  // await twitterClient.v1.tweet('Hello, this is a test.')
 
   try {
     const response = await client.tweets.statusesUpdate({

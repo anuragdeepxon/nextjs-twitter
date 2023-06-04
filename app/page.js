@@ -5,10 +5,10 @@ import React, { useEffect, useRef, useState } from 'react'
 import DropDown from '@/components/form/DropDown'
 import { tweettypes, tweetvibes } from '@/utils/datatypes'
 import Head from 'next/head'
-import { toast, Toaster } from 'react-hot-toast'
 import Header from '@/components/common/Header'
+import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 
-const index = () => {
+const Index = () => {
   const router = useRouter()
   const [apiKey, setApiKey] = useState('')
   const [vibe, setVibe] = useState('Casual')
@@ -27,13 +27,25 @@ const index = () => {
     setLoading(true)
 
     if (!apiKey) {
-      toast.error('Please Add Your API Key!')
+      enqueueSnackbar('Please Add Your API Key!', {
+        variant: 'error',
+        anchorOrigin: {
+          vertical: 'top',
+          horizontal: 'center',
+        },
+      })
       setLoading(false)
       return
     }
 
     if (!tweet) {
-      toast.error('Please write about your tweet!')
+      enqueueSnackbar('Please write about your tweet!', {
+        variant: 'error',
+        anchorOrigin: {
+          vertical: 'top',
+          horizontal: 'center',
+        },
+      })
       setLoading(false)
       return
     }
@@ -66,13 +78,25 @@ const index = () => {
         setLoading(false)
         const errorResponse = await response.json()
         const errorMessage = errorResponse.error
-        toast.error(errorMessage)
+
+        enqueueSnackbar(errorMessage, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
       } else {
-        const responseData = await response.json() // Parse response body as JSON
+        const responseData = await response.json()
         if (responseData.error) {
-          // Handle error response
           setLoading(false)
-          toast.error(responseData.error)
+          enqueueSnackbar(responseData.error, {
+            variant: 'error',
+            anchorOrigin: {
+              vertical: 'top',
+              horizontal: 'center',
+            },
+          })
         } else {
           const restweets = responseData.data.choices[0].text
             .split('\n')
@@ -87,7 +111,13 @@ const index = () => {
       }
     } catch (error) {
       setLoading(false)
-      toast.error(`An error occurred: ${error.message}`)
+      enqueueSnackbar(`An error occurred: ${error.message}`, {
+        variant: 'error',
+        anchorOrigin: {
+          vertical: 'top',
+          horizontal: 'center',
+        },
+      })
     }
   }
 
@@ -102,11 +132,11 @@ const index = () => {
 
       <Header menuItems={menuItems} />
 
-      <main className="bg-gradient-to-r mt-16 from-indigo-800 to-purple-700 min-h-screen">
-        <Toaster />
+      <main className="bg-gradient-to-r mt-14 from-indigo-800 to-fuchsia-600 min-h-screen">
+        <SnackbarProvider />
 
         <div className="flex justify-end px-4 py-2">
-          <div className="group">{/* Place your content here */}</div>
+          <div className="group"></div>
         </div>
         <div className="max-w-5xl mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold text-white text-center mb-10">
@@ -144,7 +174,7 @@ const index = () => {
                 <button
                   type="submit"
                   onClick={generateBio}
-                  className="bg-blue-600 text-white rounded-md font-medium px-6 py-3 hover:bg-blue-500 transition-colors"
+                  className="bg-indigo-900 text-white rounded-md font-medium px-6 py-3 hover:bg-indigo-800 transition-colors"
                 >
                   Generate your tweet &rarr;
                 </button>
@@ -152,7 +182,7 @@ const index = () => {
                 <button
                   type="submit"
                   onClick={generateBio}
-                  className="relative bg-blue-600 text-white rounded-md font-medium px-6 py-3 cursor-not-allowed opacity-75"
+                  className="relative bg-indigo-700 text-white rounded-md font-medium px-6 py-3 cursor-not-allowed opacity-75"
                   disabled
                 >
                   <span className="flex items-center justify-center">
@@ -166,6 +196,7 @@ const index = () => {
                           r="10"
                           stroke="currentColor"
                           strokeWidth="4"
+                          strokeLinecap="round"
                         />
                         <path
                           className="opacity-75"
@@ -185,4 +216,4 @@ const index = () => {
   )
 }
 
-export default index
+export default Index

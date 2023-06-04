@@ -1,42 +1,86 @@
-import { NextResponse } from 'next/server';
-import Twitter from 'twitter';
-import dotenv from 'dotenv';
+import { NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+import { v4 as uuidv4 } from 'uuid'
+import dotenv from 'dotenv'
 
-dotenv.config();
+dotenv.config()
+const prisma = new PrismaClient()
 
-export async function POST(req, res) {
-  if (req.headers.get('content-type') !== 'application/json') {
-    return NextResponse.badRequest(
-      'Invalid content-type. Expected application/json',
-    );
+export async function POST(request) {
+  try {
+    const { prompt, tweet } = await request.json()
+
+    if (!prompt || !tweet) {
+      return NextResponse.json({
+        status: 400,
+        body: JSON.stringify({ error: 'Prompt or tweet is missing' }),
+      })
+    }
+
+    const payload = {
+      model: 'text-davinci-003',
+      prompt,
+      temperature: 0.7,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      max_tokens: 200,
+      n: 5,
+    }
+
+    const openaiRes = await fetch('https://api.openai.com/v1/completions', {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+
+    if (openaiRes.status === 401) {
+      return NextResponse.json({
+        status: 401,
+        body: JSON.stringify({ error: 'Invalid API key' }),
+      })
+    }
+
+    if (!openaiRes.ok) {
+      const errorMessage = await openaiRes.text()
+      return NextResponse.json({
+        status: 401,
+        body: JSON.stringify({
+          error: `OpenAI API failed to respond: ${errorMessage}`,
+        }),
+      })
+    }
+
+    const result = await openaiRes.json()
+
+    const generatedTweets = result.choices[0].text
+      .split('\n')
+      .filter((tweet) => tweet !== '')
+
+    const savedTweets = await prisma.tweetBatch.create({
+      data: {
+        uuid: uuidv4(),
+        topic: tweet,
+        tweet_1: generatedTweets[0] || '',
+        tweet_2: generatedTweets[1] || '',
+        tweet_3: generatedTweets[2] || '',
+        tweet_4: generatedTweets[3] || '',
+        tweet_5: generatedTweets[4] || '',
+      },
+    })
+
+    await prisma.$disconnect()
+    return NextResponse.json({
+      status: 200,
+      data: { uuid: savedTweets.uuid, ...result },
+    })
+  } catch (error) {
+    return NextResponse.json({
+      status: 500,
+      body: JSON.stringify({ error: error }),
+    })
   }
-
-  const { tweet: message } = await req.json(); // Rename 'tweet' to 'message'
-
-  const client = new Twitter({
-    consumer_key: process.env.TWITTER_CONSUMER_KEY || '',
-    consumer_secret: process.env.TWITTER_CONSUMER_SECRET || '',
-    access_token_key: process.env.ACCESS_TOKEN_KEY || '',
-    access_token_secret: process.env.ACCESS_TOKEN_SECRET || '',
-  });
-
-  client.post(
-    'statuses/update',
-    { status: message + ` (${new Date().toLocaleDateString()})` },
-    function (error, createdTweet, response) { // Rename 'tweet' to 'createdTweet'
-      if (error) {
-        console.error('Error posting tweet:', error);
-        return NextResponse.json({
-          status: 500,
-          body: JSON.stringify({ error: 'Failed to post tweet' }),
-        });
-      } else {
-        console.log('Tweet posted successfully');
-        return NextResponse.json({
-          status: 200,
-          body: JSON.stringify({ success: true }),
-        });
-      }
-    },
-  );
 }

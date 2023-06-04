@@ -11,9 +11,11 @@ const Header = ({ menuItems }) => {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-700 to-indigo-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-40">
-      <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white">Social Automation</h1>
+    <header className="fixed top-0 z-50 left-0 right-0 bg-gradient-to-r from-fuchsia-600 to-indigo-900 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-40">
+      <div className="max-w-5xl mx-auto px-6 py-2 flex justify-between items-center">
+        <Link href={'/'} className="text-2xl font-bold text-white">
+          Social Automation
+        </Link>
         <div className="hidden md:flex space-x-4">
           {menuItems.map((item, index) => (
             <Link

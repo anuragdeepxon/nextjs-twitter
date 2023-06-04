@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
-import { toast, Toaster } from 'react-hot-toast'
 import Header from '@/components/common/Header'
+import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 
 const Tweet = () => {
   const router = useRouter()
@@ -26,7 +26,13 @@ const Tweet = () => {
         const { data: tweetData } = data
         setTweets(tweetData)
       } catch (error) {
-        toast.error(error.message)
+        enqueueSnackbar(data.message, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
       }
     }
 
@@ -34,8 +40,9 @@ const Tweet = () => {
   }, [])
 
   useEffect(() => {
+    const initialTweetsToShow = tweets.slice(0, tweetsPerPage)
     setDisplayedTweets(initialTweetsToShow)
-  }, [tweets])
+  }, [tweets, tweetsPerPage])
 
   const handleEdit = (uuid) => {
     router.push(`/tweet/edit/${uuid}`)
@@ -54,17 +61,35 @@ const Tweet = () => {
       if (!response.ok) {
         const errorData = await response.json()
         const errorMessage = errorData.message || 'Failed to delete tweet'
-        toast.error(errorMessage)
+        enqueueSnackbar(data.message, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
         return
       }
 
-      toast.success('Tweet deleted successfully')
+      enqueueSnackbar('Tweet deleted successfully', {
+        variant: 'success',
+        anchorOrigin: {
+          vertical: 'top',
+          horizontal: 'center',
+        },
+      })
       // Refresh the tweets after deletion
       const updatedTweets = tweets.filter((tweet) => tweet.uuid !== uuid)
       setTweets(updatedTweets)
       setDisplayedTweets(updatedTweets.slice(0, tweetsPerPage))
     } catch (error) {
-      toast.error(error.message)
+      enqueueSnackbar(data.message, {
+        variant: 'error',
+        anchorOrigin: {
+          vertical: 'top',
+          horizontal: 'center',
+        },
+      })
     }
   }
 
@@ -99,8 +124,8 @@ const Tweet = () => {
 
       <Header menuItems={menuItems} />
 
-      <main className="bg-gradient-to-r from-indigo-800 to-purple-700 mt-16 min-h-screen">
-        <Toaster />
+      <main className="bg-gradient-to-r from-indigo-800 to-fuchsia-600 mt-14 min-h-screen">
+        <SnackbarProvider />
 
         <div className="max-w-5xl mx-auto px-4 py-8">
           <br />

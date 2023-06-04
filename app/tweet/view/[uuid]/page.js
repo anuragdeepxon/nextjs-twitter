@@ -1,12 +1,11 @@
 'use client'
 
 require('dotenv').config()
-const Twitter = require('twitter-lite')
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
-import { toast, Toaster } from 'react-hot-toast'
 import Header from '@/components/common/Header'
+import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 
 const Tweet = () => {
   const router = useRouter()
@@ -34,7 +33,13 @@ const Tweet = () => {
         const { tweet_1, tweet_2, tweet_3, tweet_4, tweet_5 } = data.data
         setTweets([tweet_1, tweet_2, tweet_3, tweet_4, tweet_5])
       } catch (error) {
-        toast.error(error.message)
+        enqueueSnackbar(error.message, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
       }
     }
 
@@ -45,8 +50,13 @@ const Tweet = () => {
 
   const copyTweetToClipboard = (tweet) => {
     navigator.clipboard.writeText(tweet)
-    toast('Tweet copied to clipboard', {
-      icon: '✂️',
+
+    enqueueSnackbar('Tweet copied to clipboard', {
+      variant: 'success',
+      anchorOrigin: {
+        vertical: 'top',
+        horizontal: 'center',
+      },
     })
   }
 
@@ -63,18 +73,43 @@ const Tweet = () => {
       if (!response.ok) {
         const errorData = await response.json()
         const errorMessage = errorData.message || 'Failed to post tweet'
-        toast.error(errorMessage)
+
+        enqueueSnackbar(errorMessage, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
         return
       }
 
       const data = await response.json()
       if (data.status != 200) {
-        toast.error(data.message)
+        enqueueSnackbar(data.message, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
       } else {
-        toast.success(data.message)
+        enqueueSnackbar(data.message, {
+          variant: 'success',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
       }
     } catch (error) {
-      toast.error(error.message)
+      enqueueSnackbar(data.message, {
+        variant: 'error',
+        anchorOrigin: {
+          vertical: 'top',
+          horizontal: 'center',
+        },
+      })
     }
   }
 
@@ -98,11 +133,11 @@ const Tweet = () => {
 
       <Header menuItems={menuItems} />
 
-      <main className="bg-gradient-to-r from-indigo-800 to-purple-700 min-h-screen">
-        <Toaster />
+      <main className="bg-gradient-to-r from-indigo-800 to-fuchsia-600 min-h-screen">
+        <SnackbarProvider />
 
-        <div className="max-w-5xl mx-auto mt-16 px-4 py-8">
-          <br/>
+        <div className="max-w-5xl mx-auto mt-14 px-4 py-8">
+          <br />
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-white">{topic}</h1>
           </div>
@@ -113,7 +148,7 @@ const Tweet = () => {
               className="bg-white shadow-lg rounded-lg p-6 mb-6 hover:shadow-xl transition-shadow"
             >
               <p
-                className="text-gray-800 mb-4 text-lg"
+                className="text-gray-800 mb-4 text-md"
                 dangerouslySetInnerHTML={{ __html: withBlueHashtags(tweet) }}
               ></p>
 

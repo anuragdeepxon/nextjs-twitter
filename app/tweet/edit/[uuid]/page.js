@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
-import { toast, Toaster } from 'react-hot-toast'
 import Header from '@/components/common/Header'
+import { SnackbarProvider, enqueueSnackbar } from 'notistack'
 
 const Tweet = () => {
   const router = useRouter()
@@ -33,7 +33,13 @@ const Tweet = () => {
         setTweets([tweet_1, tweet_2, tweet_3, tweet_4, tweet_5])
         setUpdatedTweets([tweet_1, tweet_2, tweet_3, tweet_4, tweet_5])
       } catch (error) {
-        toast.error(error.message)
+        enqueueSnackbar(error.message, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
       }
     }
 
@@ -55,18 +61,45 @@ const Tweet = () => {
       if (!response.ok) {
         const errorData = await response.json()
         const errorMessage = errorData.message || 'Failed to update tweets'
-        toast.error(errorMessage)
+        enqueueSnackbar(errorMessage, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
+
         return
       }
 
       const data = await response.json()
       if (data.status !== 200) {
-        toast.error(data.message)
-      } else {
-        toast.success('Tweets updated successfully')
+        enqueueSnackbar(data.message, {
+          variant: 'error',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
+      } else if (data.status === 200) {
+        const message = 'Tweets updated successfully'
+
+        enqueueSnackbar(message, {
+          variant: 'success',
+          anchorOrigin: {
+            vertical: 'top',
+            horizontal: 'center',
+          },
+        })
       }
     } catch (error) {
-      toast.error(error.message)
+      enqueueSnackbar(error.message, {
+        variant: 'error',
+        anchorOrigin: {
+          vertical: 'top',
+          horizontal: 'center',
+        },
+      })
     }
   }
 
@@ -90,11 +123,11 @@ const Tweet = () => {
 
       <Header menuItems={menuItems} />
 
-      <main className="bg-gradient-to-r from-indigo-800 to-purple-700 min-h-screen">
-        <Toaster />
+      <main className="bg-gradient-to-r from-indigo-800 to-fuchsia-600 min-h-screen">
+        <SnackbarProvider />
         <br />
 
-        <div className="max-w-5xl mt-16 mx-auto px-4 py-8">
+        <div className="max-w-5xl mt-14 mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-white">{topic}</h1>
           </div>
@@ -109,7 +142,7 @@ const Tweet = () => {
                 value={updatedTweets[index]}
                 onChange={(e) => handleChange(index, e.target.value)}
                 rows={8}
-                className="w-full h-28 bg-white text-gray-800 rounded-md border border-gray-300 p-4 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                className="w-full h-20 bg-white text-gray-800 text-md rounded-md border border-gray-300 p-4 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 placeholder="Share your thoughts here..."
               />
             </div>
@@ -117,7 +150,7 @@ const Tweet = () => {
 
           <button
             onClick={updateTweets}
-            className="bg-purple-700 text-white rounded-md px-4 py-2 hover:bg-purple-600 transition-colors"
+            className="bg-fuchsia-700 text-white rounded-md px-4 py-2 hover:bg-fuchsia-600 transition-colors"
           >
             Update All Tweets
           </button>

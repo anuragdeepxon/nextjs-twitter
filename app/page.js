@@ -1,113 +1,188 @@
-import Image from 'next/image'
+'use client'
 
-export default function Home() {
+import { useRouter } from 'next/navigation'
+import React, { useEffect, useRef, useState } from 'react'
+import DropDown from '@/components/form/DropDown'
+import { tweettypes, tweetvibes } from '@/utils/datatypes'
+import Head from 'next/head'
+import { toast, Toaster } from 'react-hot-toast'
+import Header from '@/components/common/Header'
+
+const index = () => {
+  const router = useRouter()
+  const [apiKey, setApiKey] = useState('')
+  const [vibe, setVibe] = useState('Casual')
+  const [type, setType] = useState('Tweet')
+  const [tweet, setTweet] = useState('')
+  const [generatedTweets, setGeneratedTweets] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const localKey = `${process.env.OPENAI_KEY}`
+    setApiKey(localKey)
+  }, [])
+
+  const generateBio = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
+    if (!apiKey) {
+      toast.error('Please Add Your API Key!')
+      setLoading(false)
+      return
+    }
+
+    if (!tweet) {
+      toast.error('Please write about your tweet!')
+      setLoading(false)
+      return
+    }
+
+    const prompt = `I want you to generate 5 tweets based on the following information:
+  
+    - Tweet Text: ${tweet}
+    - Tweet Vibe: ${vibe}
+    - Tweet Type: ${type}
+  
+    For each tweet, please use natural language processing techniques to generate a message that matches the provided vibe and type of tweet. The tweets should be no longer than 280 characters each. 
+  
+    For the first tweet, please focus on conveying the main message of the input text in a way that matches the provided vibe and type.
+  
+    For the second tweet, please focus on generating a tweet that complements or expands on the message of the first tweet, again matching the provided vibe and type.`
+
+    try {
+      const response = await fetch('/api/openai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          tweet,
+        }),
+      })
+
+      if (!response.ok) {
+        setLoading(false)
+        const errorResponse = await response.json()
+        const errorMessage = errorResponse.error
+        toast.error(errorMessage)
+      } else {
+        const responseData = await response.json() // Parse response body as JSON
+        if (responseData.error) {
+          // Handle error response
+          setLoading(false)
+          toast.error(responseData.error)
+        } else {
+          const restweets = responseData.data.choices[0].text
+            .split('\n')
+            .filter((tweet) => tweet !== '')
+          setGeneratedTweets(restweets)
+
+          setTimeout(() => {
+            router.push(`/tweet/view/${responseData.data.uuid}`)
+            setLoading(false)
+          }, 1000)
+        }
+      }
+    } catch (error) {
+      setLoading(false)
+      toast.error(`An error occurred: ${error.message}`)
+    }
+  }
+
+  const menuItems = [{ label: 'All Tweets', link: '/tweets' }]
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <>
+      <Head>
+        <title>Social Automation</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <Header menuItems={menuItems} />
+
+      <main className="bg-gradient-to-r mt-16 from-indigo-800 to-purple-700 min-h-screen">
+        <Toaster />
+
+        <div className="flex justify-end px-4 py-2">
+          <div className="group">{/* Place your content here */}</div>
         </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-white text-center mb-10">
+            Twitter
+          </h1>
+          <section className="bg-white shadow-md rounded-md p-8">
+            <div className="mb-8">
+              <label className="text-gray-700 font-bold mb-2 block">
+                Select your vibe:
+              </label>
+              <div className="flex gap-2">
+                <DropDown
+                  vibe={vibe}
+                  setVibe={(newVibe) => setVibe(newVibe)}
+                  themes={tweetvibes}
+                />
+                <DropDown vibe={type} setVibe={setType} themes={tweettypes} />
+              </div>
+            </div>
+            <div className="mb-8">
+              <label className="text-gray-700 font-bold mb-2 block">
+                Write about your tweet:
+              </label>
+              <textarea
+                value={tweet}
+                onChange={(e) => setTweet(e.target.value)}
+                rows={8}
+                className="w-full bg-white text-gray-800 rounded-md border border-gray-300 p-4 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                placeholder="Share your thoughts here..."
+                required
+              />
+            </div>
+            <div className="text-center">
+              {!loading ? (
+                <button
+                  type="submit"
+                  onClick={generateBio}
+                  className="bg-blue-600 text-white rounded-md font-medium px-6 py-3 hover:bg-blue-500 transition-colors"
+                >
+                  Generate your tweet &rarr;
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  onClick={generateBio}
+                  className="relative bg-blue-600 text-white rounded-md font-medium px-6 py-3 cursor-not-allowed opacity-75"
+                  disabled
+                >
+                  <span className="flex items-center justify-center">
+                    Generating....
+                    <span className="animate-spin ml-2">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 2.627 5.373 2.627 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042.83 5.878 2.199 8.32l1.414-1.414C2.956 16.752 2 14.48 2 12H2a9.964 9.964 0 003.8 8.055l1.414-1.414zM12 20c-1.657 0-3-1.343-3-3h2c0 .552.448 1 1 1s1-.448 1-1h2c0 1.657-1.343 3-3 3z"
+                        />
+                      </svg>
+                    </span>
+                  </span>
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+      </main>
+    </>
   )
 }
+
+export default index

@@ -40,7 +40,7 @@ const Index = () => {
 
     if (!tweet) {
       enqueueSnackbar('Please write about your tweet!', {
-        variant: 'error',
+        variant: 'default',
         anchorOrigin: {
           vertical: 'top',
           horizontal: 'center',
